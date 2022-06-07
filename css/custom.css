@@ -1,0 +1,41 @@
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.centerDiv{
+	margin-top: 10%;
+}
+
+.hCenter{
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.whiteColor{
+	text-decoration: none;
+	color: white;
+	font-weight: bold;
+}
+.select2{
+	width: 100%;
+}
+.customStyle{
+	font-family: Times New Roman;
+	color : blue;
+}
+.specialStyle{
+	color : red;
+
+.dnn-bottom{
+	margin-bottom: -50%;
+}
+.button-shadow{
+	box-shadow: 2px 2px 4px black;
+}
+
+.green-Text{
+	text-decoration: none;
+	color : green;
+}

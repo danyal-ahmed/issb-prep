@@ -1,0 +1,295 @@
+var theSize = 2000000;
+var uploaded; // this later will contain all-files name to be upload in ( fileUpload )-function
+var superFlag=0;
+// ############################################################
+// #	below function is executed when form submitted
+// #	this get all files from form field
+// ############################################################
+	function fileUpload(htmlObject){
+		var flag = false;
+		var file_success = 0;
+		
+
+		var firstStep, secondStep, thirdStep;
+		if(superFlag == 0){
+			// gettnig files name from html file field below
+			uploaded = document.getElementById('theUploads').files|| [];	
+			// alert(uploaded);
+		} else if(superFlag == 1){
+			superFlag = 0;
+		// alert(uploaded);
+		}
+		
+			for(var i =0; i<uploaded.length; i++){
+				console.log("%cFile Name : "+uploaded[i].name, 'background-color:green;');
+				
+				// validating image for either an image file or a text/html file ( below )
+					firstStep = validateFile(uploaded[i].name, 'image');	
+				
+				if((firstStep != "") && (firstStep != undefined) && (firstStep != false)){
+					addUploadClasses(); // --- adding classes to upload form in upload-picture perception
+					// console.log('%c it is an image file', 'background-color:orange;');
+					// we are validating size of file less-than 2 MB ( below )
+					secondStep = validateSize(uploaded[i]);
+					if(secondStep == true){
+						// alert("file size has been validated");
+						// fileUploadProgress(uploaded, 'success');
+						file_success = file_success + 1;
+						flag = true;
+					} else{
+						// alert("only file less-than 2 MB is allowed");
+						uploadError("only file less-than 2 MB is allowed");
+						flag = false;
+					}
+				} else{
+					// alert("ONLY IMAGE FILE IS ALLOWED!");
+					uploadError("ONLY IMAGE FILE IS ALLOWED!");
+					flag = false;
+				}//--- end if cond
+			} // --- end for loop
+//##############################################################################################################
+			// checking how many file are validated
+			if((file_success != 0) && (file_success > 0)){
+				// disabling upload button when it was pressed at once ( to prevent uploading of multiple same files )
+				$('#'+htmlObject.id).prop('disabled', true);		
+			} else{
+				// enabling upload button when it was pressed at once ( to upload some files )
+				$('#'+htmlObject.id).prop('disabled', false);
+			} // --- end if/else cond
+//##############################################################################################################
+			if((flag != undefined) && (flag != false) && (flag == true)){
+				fileUploadProgress(uploaded, 'success');
+			} // --- end if cond
+			return false;
+	} // --- end func
+
+// ############################################################
+// #	below function is validating an image file
+// #	this is taking 2 parameter 1 = fileObject, 2=fileType
+// ############################################################
+	function validateFile(theFile, theExt){
+		// alert('inside validateFile :: '+theFile);
+		var flag = false;
+		var imgExt = ['jpg', 'png'];
+		var fileExt = ['txt', 'html'];
+			if((theFile != undefined) && (theExt != undefined)){
+				var ext = theFile.lastIndexOf('.');
+				var upload = theFile.substring(ext+1, theFile.length);
+
+				if(theExt == 'image'){
+					for(var i=0; i<imgExt.length; i++){
+						if(upload.toLowerCase() == imgExt[i]){
+							flag = true;
+							break;
+						} else{
+							continue;
+							flag = false;
+						} // --- end if/else ( inner )
+					} // --- end for loop
+				} else{
+					for(var j=0; j<fileExt.length; j++){
+						if(upload.toLowerCase() == fileExt[i]){
+							flag = true;
+							break;
+						} else{
+							continue;
+							flag = false;
+						} // --- end if/else ( inner )
+					} // --- end for loop
+				} // --- end if/else cond
+			} // --- end if cond
+		return flag;
+	} // --- end func
+// ############################################################
+// #	below function is validating file size
+// #	this is also taking only 1 parameter( fileObj )
+// ############################################################
+	function validateSize(theFile){
+		var flag = false;
+		if(theFile != undefined){
+			if(theFile.size < theSize){
+				flag = true;
+			} else{
+				flag = false;
+			}// --- end if cond
+		} // --- end if cond
+		return flag;
+	} // --- end func
+
+// ############################################################
+// #	below function is loading progress-bar in 
+// #	a GUI icon after validating and uploading
+// ############################################################
+	var divs;
+	function fileUploadProgress(files, status){
+		divs = new Array();
+		// alert("file length : "+files.length);
+		for(var i=0; i<files.length; i++){
+			// --- we are using div name ( 1 step ahead ) to ( i ). if (i=0) then div will (1)
+			divs[i] = 'file_upload_progress_'+(i+1);
+		} // --- end for loop
+
+		console.log('%c'+divs, 'background-color:orange;');
+
+		for(names in divs){
+			var file_name = files[names].name; // --- this is file name being uploaded (it is asigning to \"cancel upload func\")
+			// adding child divs into fileProgress div
+			$('#fileProgress')
+				.prepend('<div id="'+divs[names]+'" class"col-md-7 col-sm-7 col-xs-7">Uploading file : '
+					+files[names].name
+					+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+					+'<div class="col-md-3 col-sm-3 col-xs-3" id="'+divs[names]+'_L"></div>'
+					+'&nbsp;&nbsp;&nbsp;'
+					// +'<a href="#" onclick="removeFile(\''+divs[names]+'\', \''+file_name+'\')" >&times;</a>'+
+					+'</div><br />');
+				// function is returning JSON-Object 	
+				var imageFile = makeArray(files[names]);
+
+				// making object of xml-http for ajax request
+				var ajax = new XMLHttpRequest();
+				
+				ajax.open('POST', './php/fileUploading.php', true);
+				ajax.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+				ajax.send('data='+JSON.stringify(imageFile));
+				// console.log('%csending file : '+myObj, 'background-color:yellow;');
+				
+				ajax.onreadystatechange = function (){
+					if(ajax.status){
+						if((ajax.status == 200) && (ajax.readyState == 4)){
+							// ---- later i will handle it
+							alert(ajax.responseText);
+						} // --- end if cond 2
+					} // -- end if 1 cond
+				} // --- end func
+				ajax.upload.addEventListener('progress', function (event){
+					var percent = (event.loaded/event.total) * 100;
+					console.log('%cPercent '+percent+' % completed', 'background-color: violet');
+				});
+
+
+				// capturing div that show progress-bar
+			var fileElement = $('#'+divs[names]+'_L');
+				if((status != undefined) && (status == "success")){
+					fileElement.progressbar({
+						value : 70
+					});
+				} // --- end if cond
+			} // --- end for loop (2)
+			/*
+			* below we are 
+			* uploading our files
+			* using ajaxForm library
+			*/
+		
+	} // --- end func
+// ############################################################
+// #	below function is showing an error message
+// #	when an error arries
+// ############################################################
+	function uploadError(errMsg){
+		if(errMsg != undefined){
+			document
+			.getElementById('error-image')
+			.innerHTML = '<div class="ui-state-error ui-corner-all" style="padding: 0.7em;" ><p><span class="ui-icon ui-icon-alert pull-left" style="margin-right:0.3em;"></span><strong>Alert : </strong> '+errMsg+'<span class="pull-right"><a href="#" onclick="dismissAlert()">&times;</a></span></p></div>';
+			addUploadClasses(); // --- adding classes to above		
+		} // --- end if cond
+	} // --- end func
+// ############################################################
+// #	below function is removing error  message from
+// #	a div and made this div empty
+// ############################################################
+	function dismissAlert(){
+		var div = $('#error-image').empty();
+			
+	} // --- end func
+// ############################################################
+// #	below function is removing a file from
+// #	a file queue and stop it from uploading
+// ############################################################
+	function removeFile(element, file){
+
+		// we are removing \"hidden\" class from modal display div first here below
+		$('#alert-dialog').removeClass('hidden');
+		// we are displaying modal here below
+		$('#alert-dialog').dialog({
+			resizeable: false,
+			height : 'auto',
+			width: 450,
+			modal : true,
+			buttons : {
+				'Confirm' : function (){
+					// closing modal here below
+					$(this).dialog('close');
+					//adding again \"hidden\" class to modal display div
+					$('#alert-dialog').addClass('hidden');
+					// removing element from uploading queue
+					$('#'+element).remove();
+					// removing element name from uploading queue
+					for(var i=0; i<uploaded.length; i++){
+						if(file.search(uploaded[i].name)){
+							console.log('%cMatch found!', 'background-color:red;');
+							delete uploaded[i];
+							for(k in uploaded){
+								console.log('%c remaining Element : '+uploaded[k].name+'\n', 'background-color:yellow;');	
+							}
+							
+						} // --- end if
+						
+					} // --- end for
+				}, // --- end confirm func
+				'Cancel' : function (){
+					// closing modal here below
+					$(this).dialog('close');
+					// adding \"hidden\" class from modal display div
+					$('#alert-dialog').addClass('hidden');
+				} // --- end cancel func
+			} // --- end button braces
+		}); // --- end dialog modal display func
+			// we have prepared an object for
+		var uploadBtnId = {id : 'uploadBtn', name : 'uploadFile', type : 'submit'};
+			
+			// alert(uploaded);
+		superFlag = 1;
+		// uploaded = f_Upload;
+		// fileUpload(uploadBtnId);
+		
+	} // --- end func
+// ############################################################
+// #	below function is adding classes to upload form
+// #	form and its div's
+// ############################################################
+	function addUploadClasses(){
+		
+		$("#fileProgress").css("background", "white");
+		$('#fileProgress').css('width', '100%');
+		$("#fileProgress").css('height', 'auto');
+		$("#fileProgress").css('color', 'black');
+		// $('#fileProgress').css("background: rgba(118,238,0, 0.6); width: 100px; height:5px; color: #333333;";
+	} // --- end func
+// ############################################################
+// #	below function is enabling submit button to 
+// #			upload files through form 
+// ############################################################
+	function release(){
+		$('#uploadBtn').prop('disabled', false);
+	} // --- end func
+	
+// ############################################################
+// #	below function is making a JSON array
+// #			taking an object as parameter
+// ############################################################
+	function makeArray(fileObj){
+		if(fileObj != undefined){
+			var myArray = {
+				'name' : fileObj.name,
+				'lastModified' : fileObj.lastModified,
+				'lastModifiedDate' : fileObj.lastModifiedDate,
+				'webkitRelativePath' : fileObj.webkitRelativePath,
+				'size' : fileObj.size,
+				'type' : fileObj.type,
+				'slice' : fileObj.slice
+			};	
+			return myArray;
+		} // --- end if
+		return false;
+	} // --- end func
